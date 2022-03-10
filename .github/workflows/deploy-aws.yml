@@ -1,0 +1,44 @@
+name: Deploy Node app on AWS Elastic Beanstalk using Docker file
+
+env:
+  APP_NAME: elizabeth-giovanniello-portfolio
+  AWS_REGION: us-east-1
+  AWS_PLATFORM: Docker
+  PIPELINE_ID: $GITHUB_RUN_ID-$GITHUB_RUN_NUMBER
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy_aws:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials and version label
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - run: |
+          echo "aws_version_label=${{env.APP_NAME}}-${{env.PIPELINE_ID}}" >> $GITHUB_ENV
+
+      - name: Generate deployment package
+        run: zip -r ${{env.APP_NAME}}.zip . -x '*.git*'
+
+      
+      - name: Deploy to EB
+        uses: einaregilsson/beanstalk-deploy@v20
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: ${{ env.APP_NAME }}
+          environment_name: eag-portfolio-env
+          version_label: ${{ env.aws_version_label }}
+          region: ${{ env.AWS_REGION }}
+          deployment_package: ${{env.APP_NAME}}.zip
