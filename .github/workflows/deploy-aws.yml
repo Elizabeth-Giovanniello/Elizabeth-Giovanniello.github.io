@@ -7,6 +7,7 @@ env:
   PIPELINE_ID: $GITHUB_RUN_ID-$GITHUB_RUN_NUMBER
 
 on:
+#comment
   # pull_request:
   #   branches: [main]
   workflow_dispatch:
